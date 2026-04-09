@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/imageFragment">
+
+    <fragment
+        android:id="@+id/imageFragment"
+        android:name="com.universalconverter.pro.ui.image.ImageConverterFragment"
+        android:label="Image"
+        tools:layout="@layout/fragment_image"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <fragment
+        android:id="@+id/pdfFragment"
+        android:name="com.universalconverter.pro.ui.pdf.PdfConverterFragment"
+        android:label="PDF"
+        tools:layout="@layout/fragment_pdf"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <fragment
+        android:id="@+id/mediaFragment"
+        android:name="com.universalconverter.pro.ui.media.MediaConverterFragment"
+        android:label="Media"
+        tools:layout="@layout/fragment_media"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+    <fragment
+        android:id="@+id/threeDFragment"
+        android:name="com.universalconverter.pro.ui.threed.ThreeDFragment"
+        android:label="3D"
+        tools:layout="@layout/fragment_threed"
+        xmlns:tools="http://schemas.android.com/tools" />
+
+</navigation>

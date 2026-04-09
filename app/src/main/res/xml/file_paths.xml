@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- App-specific external storage (Pictures/UCEngine) -->
+    <external-files-path
+        name="converted_images"
+        path="Pictures/UCEngine/" />
+
+    <!-- App-specific external storage (Documents/UCEngine) -->
+    <external-files-path
+        name="converted_docs"
+        path="Documents/UCEngine/" />
+
+    <!-- App-specific external storage (Music/UCEngine) -->
+    <external-files-path
+        name="converted_audio"
+        path="Music/UCEngine/" />
+
+    <!-- App-specific external storage (Movies/UCEngine) -->
+    <external-files-path
+        name="converted_video"
+        path="Movies/UCEngine/" />
+
+    <!-- Internal cache (for temp files) -->
+    <cache-path
+        name="temp_cache"
+        path="." />
+
+    <!-- Internal files -->
+    <files-path
+        name="internal_files"
+        path="." />
+</paths>
