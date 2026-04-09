@@ -30,6 +30,9 @@ android {
         }
     }
 
+    // Pin exact NDK version — must match what CI installs
+    ndkVersion "25.2.9519653"
+
     buildTypes {
         debug {
             debuggable true
@@ -49,7 +52,7 @@ android {
     externalNativeBuild {
         cmake {
             path "src/main/cpp/CMakeLists.txt"
-            version "3.22.1"
+            version "3.18.1"
         }
     }
 
