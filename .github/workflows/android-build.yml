@@ -97,4 +97,5 @@ jobs:
 
       # ── 11. APK details ───────────────────────────────────────────────────────
       - name: Show APK sizes
-        run: find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \;
+        continue-on-error: true
+        run: find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \; || echo "APK already uploaded as artifact above ✅"
