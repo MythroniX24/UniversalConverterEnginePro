@@ -32,15 +32,14 @@ jobs:
       # ── 4. NDK + CMake ───────────────────────────────────────────────────────
       - name: Install NDK 25 and CMake
         run: |
-          echo "y" | sdkmanager \
+          yes | sdkmanager \
             "ndk;25.2.9519653" \
             "cmake;3.22.1" \
             --sdk_root="${ANDROID_SDK_ROOT}" 2>&1 | grep -E "^(Downloading|Installing|done)" || true
           NDK_PATH="${ANDROID_SDK_ROOT}/ndk/25.2.9519653"
           echo "ANDROID_NDK_HOME=${NDK_PATH}" >> $GITHUB_ENV
           echo "ANDROID_NDK=${NDK_PATH}"      >> $GITHUB_ENV
-          echo "NDK installed at: ${NDK_PATH}"
-          ls "${NDK_PATH}" | head -5
+          ls "${NDK_PATH}" | head -3
 
       # ── 5. Gradle Wrapper JAR ────────────────────────────────────────────────
       - name: Download Gradle Wrapper JAR
@@ -49,7 +48,7 @@ jobs:
           curl -fsSL \
             "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
             -o gradle/wrapper/gradle-wrapper.jar
-          echo "Wrapper JAR: $(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes"
+          echo "JAR: $(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes"
 
       # ── 6. Cache Gradle ──────────────────────────────────────────────────────
       - name: Cache Gradle packages
@@ -66,36 +65,41 @@ jobs:
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
-      # ── 8. Build Debug — FULL output for debugging ───────────────────────────
+      # ── 8. Build Debug APK — NO pipe, real exit code ─────────────────────────
       - name: Build Debug APK
-        run: ./gradlew assembleDebug --stacktrace --info 2>&1 | tail -200
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── 9. Build Release ─────────────────────────────────────────────────────
+      # ── 9. Verify Debug APK exists ───────────────────────────────────────────
+      - name: Verify Debug APK
+        run: |
+          echo "=== APK Output ==="
+          find app/build/outputs -type f -name "*.apk" 2>/dev/null
+          ls -lh app/build/outputs/apk/debug/*.apk
+
+      # ── 10. Build Release APK ────────────────────────────────────────────────
       - name: Build Release APK (unsigned)
-        run: ./gradlew assembleRelease --stacktrace 2>&1 | tail -100
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── 10. Upload artifacts ─────────────────────────────────────────────────
+      # ── 11. Upload Debug APK ─────────────────────────────────────────────────
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: UniversalConverterEnginePro-Debug
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
           retention-days: 30
 
+      # ── 12. Upload Release APK ───────────────────────────────────────────────
       - name: Upload Release APK
         uses: actions/upload-artifact@v4
         with:
           name: UniversalConverterEnginePro-Release
           path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
           retention-days: 30
-
-      # ── 11. APK details ───────────────────────────────────────────────────────
-      - name: Show APK sizes
-        continue-on-error: true
-        run: find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \; || echo "APK already uploaded as artifact above ✅"
