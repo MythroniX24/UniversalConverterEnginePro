@@ -4,6 +4,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.work.CoroutineWorker
 import androidx.work.ForegroundInfo
@@ -93,13 +94,19 @@ class ConversionWorker(
             .build()
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            ForegroundInfo(
-                NOTIFICATION_ID, notification,
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
-            )
+            createForegroundInfoQ(notification)
         } else {
             ForegroundInfo(NOTIFICATION_ID, notification)
         }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun createForegroundInfoQ(notification: android.app.Notification): ForegroundInfo {
+        return ForegroundInfo(
+            NOTIFICATION_ID,
+            notification,
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        )
     }
 
     private fun updateNotification(progress: Int, message: String) {

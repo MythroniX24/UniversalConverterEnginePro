@@ -81,6 +81,10 @@ android {
             excludes += '/META-INF/*.kotlin_module'
             excludes += 'META-INF/versions/9/OSGI-INF/**'
         }
+        // Keep NDK shared libs in the APK
+        jniLibs {
+            useLegacyPackaging = true
+        }
     }
 }
 

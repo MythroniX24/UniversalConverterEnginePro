@@ -35,7 +35,6 @@ jobs:
           NDK_PATH="${ANDROID_SDK_ROOT}/ndk/25.2.9519653"
           echo "ANDROID_NDK_HOME=${NDK_PATH}" >> $GITHUB_ENV
           echo "ANDROID_NDK=${NDK_PATH}"      >> $GITHUB_ENV
-          echo "NDK ready: $(ls ${NDK_PATH} | head -3)"
 
       - name: Download Gradle Wrapper JAR
         run: |
@@ -43,7 +42,6 @@ jobs:
           curl -fsSL \
             "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
             -o gradle/wrapper/gradle-wrapper.jar
-          echo "JAR: $(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes"
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -58,21 +56,40 @@ jobs:
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
-      # ── Build Debug APK ───────────────────────────────────────────────────────
+      # ── Debug Build ──────────────────────────────────────────────────────────
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── Build Release APK ─────────────────────────────────────────────────────
+      # ── Release Build — save log to file, show HEAD (real errors are at top) ─
       - name: Build Release APK
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
+        id: build_release
+        continue-on-error: true
+        run: |
+          ./gradlew assembleRelease --no-daemon --stacktrace > /tmp/release.log 2>&1
+          EXIT_CODE=$?
+          echo "====== FIRST 80 LINES (real errors here) ======"
+          head -80 /tmp/release.log
+          echo ""
+          echo "====== LAST 30 LINES ======"
+          tail -30 /tmp/release.log
+          exit $EXIT_CODE
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── Upload Debug APK — always runs even if release fails ──────────────────
+      # ── Upload release log as artifact so we can read full error ────────────
+      - name: Upload release build log
+        if: steps.build_release.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-build-log
+          path: /tmp/release.log
+          retention-days: 7
+
+      # ── Upload Debug APK (always) ────────────────────────────────────────────
       - name: Upload Debug APK
         if: always()
         uses: actions/upload-artifact@v4
@@ -82,7 +99,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      # ── Upload Release APK ────────────────────────────────────────────────────
+      # ── Upload Release APK (if it built) ─────────────────────────────────────
       - name: Upload Release APK
         if: always()
         uses: actions/upload-artifact@v4
@@ -92,10 +109,8 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      # ── Summary ───────────────────────────────────────────────────────────────
-      - name: Show build summary
+      - name: Show APK summary
         if: always()
         run: |
-          echo "=== APKs Generated ==="
-          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \; 2>/dev/null \
-            || echo "No APKs found"
+          echo "=== All APKs ==="
+          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "None found"

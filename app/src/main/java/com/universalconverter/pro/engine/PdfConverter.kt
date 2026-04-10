@@ -10,7 +10,6 @@ import android.graphics.pdf.PdfDocument
 import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.Environment
-import android.os.ParcelFileDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -23,7 +22,7 @@ object PdfConverter {
         context: Context,
         imageUris: List<Uri>,
         outputName: String,
-        quality: Int = 85,
+        @Suppress("UNUSED_PARAMETER") quality: Int = 85,
         onProgress: (Int, String) -> Unit
     ): String? = withContext(Dispatchers.IO) {
         try {
@@ -36,7 +35,8 @@ object PdfConverter {
                 val pct = 10 + (index * 80 / imageUris.size)
                 onProgress(pct, "Adding page ${index + 1} of ${imageUris.size}…")
 
-                val inputStream = context.contentResolver.openInputStream(uri) ?: return@forEachIndexed
+                val inputStream = context.contentResolver.openInputStream(uri)
+                    ?: return@forEachIndexed
                 val bitmap = BitmapFactory.decodeStream(inputStream)
                 inputStream.close()
                 bitmap ?: return@forEachIndexed
@@ -70,8 +70,9 @@ object PdfConverter {
     ): List<String> = withContext(Dispatchers.IO) {
         val results = mutableListOf<String>()
         try {
-            val pfd = context.contentResolver.openFileDescriptor(pdfUri, "r") ?: return@withContext results
-            val renderer = PdfRenderer(pfd)
+            val pfd = context.contentResolver.openFileDescriptor(pdfUri, "r")
+                ?: return@withContext results
+            val renderer  = PdfRenderer(pfd)
             val pageCount = renderer.pageCount
             val outputDir = getOutputDir(context)
 
@@ -81,19 +82,21 @@ object PdfConverter {
                     "Rendering page ${i + 1} of $pageCount…"
                 )
                 val page   = renderer.openPage(i)
-                val bitmap = Bitmap.createBitmap(
-                    page.width * 2, page.height * 2,
-                    Bitmap.Config.ARGB_8888
-                )
-                // White background
+                // ✅ Save dimensions BEFORE close
+                val pageWidth  = page.width * 2
+                val pageHeight = page.height * 2
+                val bitmap = Bitmap.createBitmap(pageWidth, pageHeight, Bitmap.Config.ARGB_8888)
                 val canvas = Canvas(bitmap)
                 canvas.drawColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
-                page.close()
+                page.close() // ✅ close AFTER all page.xxx accesses
 
-                val outFile = File(outputDir, "page_${i + 1}_${System.currentTimeMillis()}.$outputFormat")
-                val format  = if (outputFormat == "png") Bitmap.CompressFormat.PNG
-                              else Bitmap.CompressFormat.JPEG
+                val outFile = File(
+                    outputDir,
+                    "page_${i + 1}_${System.currentTimeMillis()}.$outputFormat"
+                )
+                val format = if (outputFormat == "png") Bitmap.CompressFormat.PNG
+                             else Bitmap.CompressFormat.JPEG
                 FileOutputStream(outFile).use { fos ->
                     bitmap.compress(format, quality, fos)
                 }
@@ -129,14 +132,19 @@ object PdfConverter {
             for (i in 0 until pageCount) {
                 val pct = 10 + (i * 80 / pageCount)
                 onProgress(pct, "Compressing page ${i + 1}/$pageCount…")
-                val page   = renderer.openPage(i)
-                val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.RGB_565)
+
+                val page      = renderer.openPage(i)
+                // ✅ Save dimensions BEFORE close
+                val pageWidth  = page.width
+                val pageHeight = page.height
+                val bitmap = Bitmap.createBitmap(pageWidth, pageHeight, Bitmap.Config.RGB_565)
                 val canvas = Canvas(bitmap)
                 canvas.drawColor(Color.WHITE)
                 page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
-                page.close()
+                page.close() // ✅ close AFTER all page.xxx accesses
 
-                val pageInfo = PdfDocument.PageInfo.Builder(page.width, page.height, i + 1).create()
+                // Use saved dimensions (not page.width after close)
+                val pageInfo = PdfDocument.PageInfo.Builder(pageWidth, pageHeight, i + 1).create()
                 val pdfPage  = pdfDoc.startPage(pageInfo)
                 val paint    = Paint().apply { isFilterBitmap = true }
                 pdfPage.canvas.drawBitmap(bitmap, 0f, 0f, paint)
@@ -174,19 +182,26 @@ object PdfConverter {
                 val pct = 5 + (docIdx * 85 / pdfUris.size)
                 onProgress(pct, "Adding PDF ${docIdx + 1} of ${pdfUris.size}…")
 
-                val pfd      = context.contentResolver.openFileDescriptor(uri, "r") ?: return@forEachIndexed
+                val pfd = context.contentResolver.openFileDescriptor(uri, "r")
+                    ?: return@forEachIndexed
                 val renderer = PdfRenderer(pfd)
 
                 for (i in 0 until renderer.pageCount) {
-                    val page     = renderer.openPage(i)
-                    val bitmap   = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
-                    val canvas   = Canvas(bitmap)
+                    val page   = renderer.openPage(i)
+                    // ✅ Save dimensions BEFORE close
+                    val pageWidth  = page.width
+                    val pageHeight = page.height
+                    val bitmap = Bitmap.createBitmap(pageWidth, pageHeight, Bitmap.Config.ARGB_8888)
+                    val canvas = Canvas(bitmap)
                     canvas.drawColor(Color.WHITE)
                     page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_PRINT)
-                    page.close()
+                    page.close() // ✅ close AFTER all page.xxx accesses
 
-                    val pageInfo = PdfDocument.PageInfo.Builder(page.width, page.height, pageNum++).create()
-                    val pdfPage  = pdfDoc.startPage(pageInfo)
+                    // Use saved dimensions
+                    val pageInfo = PdfDocument.PageInfo.Builder(
+                        pageWidth, pageHeight, pageNum++
+                    ).create()
+                    val pdfPage = pdfDoc.startPage(pageInfo)
                     pdfPage.canvas.drawBitmap(bitmap, 0f, 0f, null)
                     pdfDoc.finishPage(pdfPage)
                     bitmap.recycle()

@@ -84,7 +84,7 @@ private:
 };
 
 // Singleton pool using hardware concurrency
-static NativeThreadPool& getPool() {
+[[maybe_unused]] static NativeThreadPool& getPool() {
     static NativeThreadPool pool(
         std::max(2u, std::thread::hardware_concurrency()));
     return pool;
