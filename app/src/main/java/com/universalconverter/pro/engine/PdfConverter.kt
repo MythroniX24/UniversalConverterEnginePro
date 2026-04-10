@@ -117,7 +117,7 @@ object PdfConverter {
     suspend fun compressPdf(
         context: Context,
         pdfUri: Uri,
-        quality: Int = 70,
+        @Suppress("UNUSED_PARAMETER") quality: Int = 70,
         onProgress: (Int, String) -> Unit
     ): String? = withContext(Dispatchers.IO) {
         try {
