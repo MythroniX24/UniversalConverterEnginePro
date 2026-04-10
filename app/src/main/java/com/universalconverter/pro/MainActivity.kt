@@ -8,6 +8,7 @@ import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -17,43 +18,38 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.snackbar.Snackbar
 import com.universalconverter.pro.databinding.ActivityMainBinding
-import com.universalconverter.pro.engine.FileDetector
+import com.universalconverter.pro.engine.NativeEngine
 import com.universalconverter.pro.premium.PremiumActivity
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    // ─── Permission launcher ─────────────────────────────────────────────────
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.values.all { it }
-        if (!allGranted) {
-            Snackbar.make(
-                binding.root,
-                "Storage permissions required for full functionality",
-                Snackbar.LENGTH_LONG
-            ).setAction("Settings") {
-                openAppSettings()
-            }.show()
-        }
-    }
+    ) { /* permissions handled gracefully */ }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        setupToolbar()
-        setupNavigation()
-        requestPermissions()
-        handleIncomingIntent(intent)
-    }
+        try {
+            binding = ActivityMainBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+            setupToolbar()
+            setupNavigation()
+            requestPermissions()
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        handleIncomingIntent(intent)
+            // Log native engine status
+            if (!NativeEngine.isLoaded) {
+                Toast.makeText(this,
+                    "Note: Native engine unavailable on this device",
+                    Toast.LENGTH_SHORT).show()
+            }
+
+        } catch (e: Exception) {
+            // Last-resort catch — prevent blank crash
+            android.util.Log.e("MainActivity", "onCreate error: ${e.message}", e)
+        }
     }
 
     private fun setupToolbar() {
@@ -62,79 +58,31 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNavigation() {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment ?: return
         val navController = navHostFragment.navController
 
         val appBarConfig = AppBarConfiguration(
-            setOf(
-                R.id.imageFragment,
-                R.id.pdfFragment,
-                R.id.mediaFragment,
-                R.id.threeDFragment
-            )
+            setOf(R.id.imageFragment, R.id.pdfFragment,
+                  R.id.mediaFragment, R.id.threeDFragment)
         )
         setupActionBarWithNavController(navController, appBarConfig)
         binding.bottomNavigation.setupWithNavController(navController)
     }
 
     private fun requestPermissions() {
-        val permissions = mutableListOf<String>()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            permissions += Manifest.permission.READ_MEDIA_IMAGES
-            permissions += Manifest.permission.READ_MEDIA_VIDEO
-            permissions += Manifest.permission.READ_MEDIA_AUDIO
-            permissions += Manifest.permission.POST_NOTIFICATIONS
-        } else {
-            permissions += Manifest.permission.READ_EXTERNAL_STORAGE
-            if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-                permissions += Manifest.permission.WRITE_EXTERNAL_STORAGE
+        val permissions = buildList {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                add(Manifest.permission.READ_MEDIA_IMAGES)
+                add(Manifest.permission.READ_MEDIA_VIDEO)
+                add(Manifest.permission.READ_MEDIA_AUDIO)
+            } else {
+                add(Manifest.permission.READ_EXTERNAL_STORAGE)
             }
         }
         val toRequest = permissions.filter {
             ContextCompat.checkSelfPermission(this, it) != PackageManager.PERMISSION_GRANTED
         }
         if (toRequest.isNotEmpty()) permissionLauncher.launch(toRequest.toTypedArray())
-    }
-
-    private fun handleIncomingIntent(intent: Intent?) {
-        intent ?: return
-        when (intent.action) {
-            Intent.ACTION_VIEW -> {
-                val uri = intent.data ?: return
-                routeToConverterByUri(uri)
-            }
-            Intent.ACTION_SEND -> {
-                val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java)
-                } else {
-                    @Suppress("DEPRECATION")
-                    intent.getParcelableExtra(Intent.EXTRA_STREAM)
-                } ?: return
-                routeToConverterByUri(uri)
-            }
-        }
-    }
-
-    private fun routeToConverterByUri(uri: Uri) {
-        val mimeType = contentResolver.getType(uri) ?: return
-        val navController = (supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment)
-            ?.navController ?: return
-
-        when {
-            mimeType.startsWith("image/") ->
-                navController.navigate(R.id.imageFragment)
-            mimeType == "application/pdf" ->
-                navController.navigate(R.id.pdfFragment)
-            mimeType.startsWith("video/") || mimeType.startsWith("audio/") ->
-                navController.navigate(R.id.mediaFragment)
-        }
-    }
-
-    private fun openAppSettings() {
-        startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
-        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -154,7 +102,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onSupportNavigateUp(): Boolean {
         val navHostFragment = supportFragmentManager
-            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
-        return navHostFragment.navController.navigateUp() || super.onSupportNavigateUp()
+            .findFragmentById(R.id.nav_host_fragment) as? NavHostFragment
+        return navHostFragment?.navController?.navigateUp() ?: super.onSupportNavigateUp()
     }
 }

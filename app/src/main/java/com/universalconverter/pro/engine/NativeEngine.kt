@@ -1,88 +1,121 @@
 package com.universalconverter.pro.engine
 
 import android.graphics.Bitmap
+import android.util.Log
 
 /**
  * JNI bridge to the native C++ converter engine.
- * All methods map 1:1 to C++ implementations in converter_engine.cpp,
- * image_processor.cpp, file_detector.cpp, thread_pool.cpp.
+ * Safe wrappers — never crashes even if .so fails to load.
  */
 object NativeEngine {
 
+    private const val TAG = "NativeEngine"
+    var isLoaded: Boolean = false
+        private set
+
     init {
-        System.loadLibrary("universalconverter")
+        try {
+            System.loadLibrary("universalconverter")
+            isLoaded = true
+            Log.i(TAG, "Native library loaded successfully")
+        } catch (e: UnsatisfiedLinkError) {
+            isLoaded = false
+            Log.e(TAG, "Failed to load native library: ${e.message}")
+        } catch (e: Exception) {
+            isLoaded = false
+            Log.e(TAG, "Unexpected error loading native library: ${e.message}")
+        }
     }
 
-    // ─── Engine Info ──────────────────────────────────────────────────────────
-    external fun getEngineVersion(): String
+    // ─── Safe wrappers — fallback if .so not loaded ───────────────────────────
 
-    // ─── File Detection ───────────────────────────────────────────────────────
-    /** Returns MIME type string based on file extension */
-    external fun detectMimeType(filePath: String): String
+    fun getEngineVersion(): String =
+        if (isLoaded) try { getEngineVersionNative() } catch (e: Exception) { "1.0.0-fallback" }
+        else "1.0.0-fallback"
 
-    /** Returns FormatCategory ordinal (0=IMAGE, 1=DOCUMENT, 2=VIDEO, 3=AUDIO, 4=ARCHIVE, 5=3D, 6=UNKNOWN) */
-    external fun detectCategory(filePath: String): Int
+    fun detectMimeType(filePath: String): String =
+        if (isLoaded) try { detectMimeTypeNative(filePath) } catch (e: Exception) { "application/octet-stream" }
+        else "application/octet-stream"
 
-    /** Reads magic bytes from the file to detect true format */
-    external fun detectByMagicBytes(filePath: String): String
+    fun detectCategory(filePath: String): Int =
+        if (isLoaded) try { detectCategoryNative(filePath) } catch (e: Exception) { CATEGORY_UNKNOWN }
+        else CATEGORY_UNKNOWN
 
-    /** Returns true if the from→to conversion is valid and supported */
-    external fun isValidConversion(fromExt: String, toExt: String): Boolean
+    fun detectByMagicBytes(filePath: String): String =
+        if (isLoaded) try { detectByMagicBytesNative(filePath) } catch (e: Exception) { "unknown" }
+        else "unknown"
 
-    /** Returns an array of valid output format extensions for the given input file */
-    external fun getValidOutputFormats(inputPath: String): Array<String>
+    fun isValidConversion(fromExt: String, toExt: String): Boolean =
+        if (isLoaded) try { isValidConversionNative(fromExt, toExt) } catch (e: Exception) { false }
+        else false
 
-    /** Suggests the best output format for smallest size with good quality */
-    external fun suggestBestFormat(inputPath: String): String
+    fun getValidOutputFormats(inputPath: String): Array<String> =
+        if (isLoaded) try { getValidOutputFormatsNative(inputPath) } catch (e: Exception) { emptyArray() }
+        else emptyArray()
 
-    /** Predicts output file size in bytes for the given format and quality */
-    external fun predictOutputSize(inputPath: String, targetFormat: String, quality: Int): Long
+    fun suggestBestFormat(inputPath: String): String =
+        if (isLoaded) try { suggestBestFormatNative(inputPath) } catch (e: Exception) { "jpg" }
+        else "jpg"
 
-    // ─── File Info ────────────────────────────────────────────────────────────
-    external fun getFileSize(filePath: String): Long
-    external fun fileExists(filePath: String): Boolean
+    fun predictOutputSize(inputPath: String, targetFormat: String, quality: Int): Long =
+        if (isLoaded) try { predictOutputSizeNative(inputPath, targetFormat, quality) } catch (e: Exception) { -1L }
+        else -1L
 
-    // ─── Bitmap Operations ────────────────────────────────────────────────────
-    /** High-performance native bitmap resize using bilinear interpolation */
-    external fun resizeBitmapNative(srcBitmap: Bitmap, dstBitmap: Bitmap): Boolean
+    fun getFileSize(filePath: String): Long =
+        if (isLoaded) try { getFileSizeNative(filePath) } catch (e: Exception) { -1L }
+        else -1L
 
-    /** Compute mean brightness (0.0–1.0) */
-    external fun computeBrightness(bitmap: Bitmap): Float
+    fun fileExists(filePath: String): Boolean =
+        if (isLoaded) try { fileExistsNative(filePath) } catch (e: Exception) { false }
+        else false
 
-    /** Compute image complexity score (0.0–1.0) based on edge detection */
-    external fun computeImageComplexity(bitmap: Bitmap): Float
+    fun resizeBitmapNative(srcBitmap: Bitmap, dstBitmap: Bitmap): Boolean =
+        if (isLoaded) try { resizeBitmapNativeImpl(srcBitmap, dstBitmap) } catch (e: Exception) { false }
+        else false
 
-    /** Convert bitmap to greyscale in-place */
-    external fun applyGrayscale(bitmap: Bitmap)
+    fun computeBrightness(bitmap: Bitmap): Float =
+        if (isLoaded) try { computeBrightnessNative(bitmap) } catch (e: Exception) { 0.5f }
+        else 0.5f
 
-    /** Apply light blur in-place (radius 1–3) */
-    external fun applyLightBlur(bitmap: Bitmap, radius: Int)
+    fun computeImageComplexity(bitmap: Bitmap): Float =
+        if (isLoaded) try { computeImageComplexityNative(bitmap) } catch (e: Exception) { 0.5f }
+        else 0.5f
 
-    /** Adjust brightness (–1.0 to +1.0) and contrast (0.5–2.0) */
-    external fun adjustBrightnessContrast(bitmap: Bitmap, brightness: Float, contrast: Float)
+    fun applyGrayscale(bitmap: Bitmap) {
+        if (isLoaded) try { applyGrayscaleNative(bitmap) } catch (e: Exception) { /* ignore */ }
+    }
 
-    // ─── Compression ─────────────────────────────────────────────────────────
-    /** Estimate quality (0–100) needed to reach target size */
-    external fun estimateOptimalQuality(
-        inputSizeBytes: Long,
-        targetSizeBytes: Long,
-        format: String
-    ): Int
+    fun applyLightBlur(bitmap: Bitmap, radius: Int) {
+        if (isLoaded) try { applyLightBlurNative(bitmap, radius) } catch (e: Exception) { /* ignore */ }
+    }
 
-    /** Returns savings fraction 0.0–1.0 */
-    external fun computeCompressionRatio(originalSize: Long, compressedSize: Long): Float
+    fun adjustBrightnessContrast(bitmap: Bitmap, brightness: Float, contrast: Float) {
+        if (isLoaded) try { adjustBrightnessContrastNative(bitmap, brightness, contrast) } catch (e: Exception) { /* ignore */ }
+    }
 
-    /** Native RLE data compression (for raw byte buffers) */
-    external fun compressDataNative(inputData: ByteArray): ByteArray
+    fun estimateOptimalQuality(inputSizeBytes: Long, targetSizeBytes: Long, format: String): Int =
+        if (isLoaded) try { estimateOptimalQualityNative(inputSizeBytes, targetSizeBytes, format) } catch (e: Exception) { 85 }
+        else 85
 
-    /** Native RLE data decompression */
-    external fun decompressDataNative(inputData: ByteArray): ByteArray
+    fun computeCompressionRatio(originalSize: Long, compressedSize: Long): Float =
+        if (isLoaded) try { computeCompressionRatioNative(originalSize, compressedSize) } catch (e: Exception) { 0f }
+        else 0f
 
-    // ─── Threading ────────────────────────────────────────────────────────────
-    external fun getAvailableThreads(): Int
+    fun compressDataNative(inputData: ByteArray): ByteArray =
+        if (isLoaded) try { compressDataNativeImpl(inputData) } catch (e: Exception) { inputData }
+        else inputData
 
-    // ─── Control ─────────────────────────────────────────────────────────────
-    external fun cancelOperation()
+    fun decompressDataNative(inputData: ByteArray): ByteArray =
+        if (isLoaded) try { decompressDataNativeImpl(inputData) } catch (e: Exception) { inputData }
+        else inputData
+
+    fun getAvailableThreads(): Int =
+        if (isLoaded) try { getAvailableThreadsNative() } catch (e: Exception) { 2 }
+        else 2
+
+    fun cancelOperation() {
+        if (isLoaded) try { cancelOperationNative() } catch (e: Exception) { /* ignore */ }
+    }
 
     // ─── Category Constants ───────────────────────────────────────────────────
     const val CATEGORY_IMAGE    = 0
@@ -92,4 +125,28 @@ object NativeEngine {
     const val CATEGORY_ARCHIVE  = 4
     const val CATEGORY_3D       = 5
     const val CATEGORY_UNKNOWN  = 6
+
+    // ─── Native declarations (private) ────────────────────────────────────────
+    private external fun getEngineVersionNative(): String
+    private external fun detectMimeTypeNative(filePath: String): String
+    private external fun detectCategoryNative(filePath: String): Int
+    private external fun detectByMagicBytesNative(filePath: String): String
+    private external fun isValidConversionNative(fromExt: String, toExt: String): Boolean
+    private external fun getValidOutputFormatsNative(inputPath: String): Array<String>
+    private external fun suggestBestFormatNative(inputPath: String): String
+    private external fun predictOutputSizeNative(inputPath: String, targetFormat: String, quality: Int): Long
+    private external fun getFileSizeNative(filePath: String): Long
+    private external fun fileExistsNative(filePath: String): Boolean
+    private external fun resizeBitmapNativeImpl(srcBitmap: Bitmap, dstBitmap: Bitmap): Boolean
+    private external fun computeBrightnessNative(bitmap: Bitmap): Float
+    private external fun computeImageComplexityNative(bitmap: Bitmap): Float
+    private external fun applyGrayscaleNative(bitmap: Bitmap)
+    private external fun applyLightBlurNative(bitmap: Bitmap, radius: Int)
+    private external fun adjustBrightnessContrastNative(bitmap: Bitmap, brightness: Float, contrast: Float)
+    private external fun estimateOptimalQualityNative(inputSizeBytes: Long, targetSizeBytes: Long, format: String): Int
+    private external fun computeCompressionRatioNative(originalSize: Long, compressedSize: Long): Float
+    private external fun compressDataNativeImpl(inputData: ByteArray): ByteArray
+    private external fun decompressDataNativeImpl(inputData: ByteArray): ByteArray
+    private external fun getAvailableThreadsNative(): Int
+    private external fun cancelOperationNative()
 }

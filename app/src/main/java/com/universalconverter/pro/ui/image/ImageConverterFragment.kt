@@ -1,6 +1,5 @@
 package com.universalconverter.pro.ui.image
 
-import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -14,13 +13,12 @@ import androidx.core.content.FileProvider
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-import com.universalconverter.pro.R
 import com.universalconverter.pro.databinding.FragmentImageBinding
 import com.universalconverter.pro.engine.FileDetector
 import com.universalconverter.pro.engine.JobStatus
+import com.universalconverter.pro.premium.PremiumActivity
 import com.universalconverter.pro.premium.PremiumManager
 import java.io.File
 
@@ -30,13 +28,10 @@ class ImageConverterFragment : Fragment() {
     private val binding get() = _binding!!
     private val viewModel: ImageViewModel by viewModels()
 
-    // ─── File picker launcher ─────────────────────────────────────────────────
     private val pickImages = registerForActivityResult(
         ActivityResultContracts.GetMultipleContents()
     ) { uris: List<Uri> ->
-        if (uris.isNotEmpty()) {
-            viewModel.addFiles(requireContext(), uris)
-        }
+        if (uris.isNotEmpty()) viewModel.addFiles(requireContext(), uris)
     }
 
     override fun onCreateView(
@@ -49,10 +44,14 @@ class ImageConverterFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupFormatSpinner()
-        setupQualitySlider()
-        setupButtons()
-        observeViewModel()
+        try {
+            setupFormatSpinner()
+            setupQualitySlider()
+            setupButtons()
+            observeViewModel()
+        } catch (e: Exception) {
+            android.util.Log.e("ImageFragment", "onViewCreated error", e)
+        }
     }
 
     private fun setupFormatSpinner() {
@@ -66,7 +65,6 @@ class ImageConverterFragment : Fragment() {
         binding.spinnerFormat.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
                 viewModel.selectedOutputFormat = formats[pos]
-                updatePrediction()
             }
             override fun onNothingSelected(p: AdapterView<*>?) {}
         }
@@ -76,97 +74,76 @@ class ImageConverterFragment : Fragment() {
         binding.sliderQuality.addOnChangeListener { _, value, _ ->
             viewModel.quality = value.toInt()
             binding.tvQualityValue.text = "${value.toInt()}%"
-            updatePrediction()
         }
         binding.sliderQuality.value = 85f
         binding.tvQualityValue.text = "85%"
     }
 
     private fun setupButtons() {
-        binding.btnPickFiles.setOnClickListener {
-            pickImages.launch("image/*")
-        }
+        binding.btnPickFiles.setOnClickListener { pickImages.launch("image/*") }
 
         binding.btnConvert.setOnClickListener {
             if (!PremiumManager.canConvert(requireContext())) {
-                showUpgradeDialog()
-                return@setOnClickListener
+                showUpgradeDialog(); return@setOnClickListener
             }
-            val files = viewModel.selectedFiles.value ?: return@setOnClickListener
-            if (files.isEmpty()) {
+            if (viewModel.selectedFiles.value.isNullOrEmpty()) {
                 Snackbar.make(binding.root, "Please select at least one image", Snackbar.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
             viewModel.startConversion(requireContext())
         }
 
-        binding.btnCancel.setOnClickListener {
-            viewModel.cancelConversion()
-        }
+        binding.btnCancel.setOnClickListener { viewModel.cancelConversion() }
+        binding.btnClear.setOnClickListener  { viewModel.clearFiles() }
 
-        binding.btnClear.setOnClickListener {
-            viewModel.clearFiles()
-        }
-
-        binding.switchRemoveExif.setOnCheckedChangeListener { _, checked ->
-            viewModel.removeExif = checked
-        }
-
-        binding.switchKeepAspect.setOnCheckedChangeListener { _, checked ->
-            viewModel.keepAspect = checked
-        }
+        binding.switchRemoveExif.setOnCheckedChangeListener { _, checked -> viewModel.removeExif = checked }
+        binding.switchKeepAspect.setOnCheckedChangeListener { _, checked -> viewModel.keepAspect  = checked }
     }
 
     private fun observeViewModel() {
         viewModel.selectedFiles.observe(viewLifecycleOwner) { files ->
-            binding.tvFileCount.text = if (files.isEmpty()) "No files selected"
-                                       else "${files.size} file(s) selected"
-            binding.tvTotalSize.text = if (files.isEmpty()) ""
-                                       else "Total: ${FileDetector.formatSize(files.sumOf { it.sizeBytes })}"
+            binding.tvFileCount.text  = if (files.isEmpty()) "No files selected" else "${files.size} file(s) selected"
+            binding.tvTotalSize.text  = if (files.isEmpty()) "" else "Total: ${FileDetector.formatSize(files.sumOf { it.sizeBytes })}"
             binding.btnConvert.isEnabled = files.isNotEmpty()
             binding.btnClear.isVisible   = files.isNotEmpty()
-            updatePrediction()
+            binding.tvPrediction.text    = ""
         }
 
         viewModel.uiState.observe(viewLifecycleOwner) { state ->
             when (state) {
                 is ImageUiState.Idle -> {
-                    binding.progressBar.isVisible   = false
-                    binding.btnCancel.isVisible     = false
-                    binding.btnConvert.isEnabled    = true
-                    binding.tvProgress.text         = ""
-                    binding.cardResults.isVisible   = false
+                    binding.progressBar.isVisible  = false
+                    binding.btnCancel.isVisible    = false
+                    binding.btnConvert.isEnabled   = !(viewModel.selectedFiles.value.isNullOrEmpty())
+                    binding.tvProgress.text        = ""
+                    binding.cardResults.isVisible  = false
                 }
                 is ImageUiState.Running -> {
-                    binding.progressBar.isVisible   = true
-                    binding.progressBar.progress    = state.progress
-                    binding.tvProgress.text         = state.message
-                    binding.btnCancel.isVisible     = true
-                    binding.btnConvert.isEnabled    = false
-                    binding.cardResults.isVisible   = false
+                    binding.progressBar.isVisible  = true
+                    binding.progressBar.progress   = state.progress
+                    binding.tvProgress.text        = state.message
+                    binding.btnCancel.isVisible    = true
+                    binding.btnConvert.isEnabled   = false
+                    binding.cardResults.isVisible  = false
                 }
                 is ImageUiState.Success -> {
-                    binding.progressBar.isVisible   = false
-                    binding.btnCancel.isVisible     = false
-                    binding.btnConvert.isEnabled    = true
-                    binding.tvProgress.text         = "✓ All conversions complete"
-                    showResults(state.jobs.map {
-                        ResultItem(it.outputPath, it.inputSizeBytes, it.outputSizeBytes)
-                    })
+                    binding.progressBar.isVisible  = false
+                    binding.btnCancel.isVisible    = false
+                    binding.btnConvert.isEnabled   = true
+                    binding.tvProgress.text        = "✓ All conversions complete"
+                    showResults(state.jobs.map { ResultItem(it.outputPath, it.inputSizeBytes, it.outputSizeBytes) })
                     PremiumManager.recordConversion(requireContext())
                 }
                 is ImageUiState.PartialSuccess -> {
-                    binding.progressBar.isVisible = false
-                    binding.btnCancel.isVisible   = false
-                    binding.btnConvert.isEnabled  = true
+                    binding.progressBar.isVisible  = false
+                    binding.btnCancel.isVisible    = false
+                    binding.btnConvert.isEnabled   = true
                     binding.tvProgress.text = "⚠ ${state.jobs.size - state.failedCount} succeeded, ${state.failedCount} failed"
-                    showResults(state.jobs
-                        .filter { it.status == JobStatus.SUCCESS }
-                        .map { ResultItem(it.outputPath, it.inputSizeBytes, it.outputSizeBytes) }
-                    )
+                    showResults(state.jobs.filter { it.status == JobStatus.SUCCESS }
+                        .map { ResultItem(it.outputPath, it.inputSizeBytes, it.outputSizeBytes) })
                 }
                 is ImageUiState.Error -> {
-                    binding.progressBar.isVisible = false
+                    binding.progressBar.isVisible  = false
                     Snackbar.make(binding.root, state.message, Snackbar.LENGTH_LONG).show()
                 }
             }
@@ -177,86 +154,50 @@ class ImageConverterFragment : Fragment() {
         if (results.isEmpty()) return
         binding.cardResults.isVisible = true
         binding.tvResultCount.text    = "${results.size} file(s) converted"
-        val totalSaved = results.sumOf { it.inputSize - it.outputSize }
-        binding.tvSizeSaved.text = "Saved ${FileDetector.formatSize(totalSaved)}"
-
-        binding.btnShareResults.setOnClickListener {
-            shareFiles(results.map { it.outputPath })
-        }
-        binding.btnOpenFolder.setOnClickListener {
-            results.firstOrNull()?.let { openFile(it.outputPath) }
-        }
-    }
-
-    private fun updatePrediction() {
-        val files = viewModel.selectedFiles.value ?: return
-        if (files.isEmpty()) {
-            binding.tvPrediction.text = ""
-            return
-        }
-        val firstFile = files.first()
-        val predicted = com.universalconverter.pro.engine.NativeEngine.predictOutputSize(
-            firstFile.uri.path ?: "", viewModel.selectedOutputFormat, viewModel.quality
-        )
-        if (predicted > 0) {
-            binding.tvPrediction.text = "Est. output: ~${FileDetector.formatSize(predicted)}"
-        }
+        val saved = results.sumOf { it.inputSize - it.outputSize }
+        binding.tvSizeSaved.text      = "Saved ${FileDetector.formatSize(saved)}"
+        binding.btnShareResults.setOnClickListener { shareFiles(results.map { it.outputPath }) }
+        binding.btnOpenFolder.setOnClickListener   { results.firstOrNull()?.let { openFile(it.outputPath) } }
     }
 
     private fun shareFiles(paths: List<String>) {
         val uris = paths.mapNotNull { path ->
-            try {
-                FileProvider.getUriForFile(
-                    requireContext(),
-                    "${requireContext().packageName}.fileprovider",
-                    File(path)
-                )
-            } catch (_: Exception) { null }
+            runCatching {
+                FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", File(path))
+            }.getOrNull()
         }
         if (uris.isEmpty()) return
-
-        val intent = Intent(Intent.ACTION_SEND_MULTIPLE).apply {
-            type = "*/*"
-            putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        }
-        startActivity(Intent.createChooser(intent, "Share Converted Files"))
+        startActivity(Intent.createChooser(
+            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "*/*"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }, "Share Converted Files"
+        ))
     }
 
     private fun openFile(path: String) {
-        try {
-            val uri = FileProvider.getUriForFile(
-                requireContext(),
-                "${requireContext().packageName}.fileprovider",
-                File(path)
-            )
+        runCatching {
+            val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.fileprovider", File(path))
             startActivity(Intent(Intent.ACTION_VIEW).apply {
                 setDataAndType(uri, requireContext().contentResolver.getType(uri))
                 addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             })
-        } catch (_: Exception) {}
+        }
     }
 
     private fun showUpgradeDialog() {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Daily Limit Reached")
-            .setMessage("You've used all free conversions for today. Upgrade to Pro for unlimited conversions!")
+            .setMessage("Upgrade to Pro for unlimited conversions!")
             .setPositiveButton("Upgrade") { _, _ ->
-                startActivity(Intent(requireContext(),
-                    com.universalconverter.pro.premium.PremiumActivity::class.java))
+                startActivity(Intent(requireContext(), PremiumActivity::class.java))
             }
             .setNegativeButton("Later", null)
             .show()
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+    override fun onDestroyView() { super.onDestroyView(); _binding = null }
 
-    data class ResultItem(
-        val outputPath: String,
-        val inputSize: Long,
-        val outputSize: Long
-    )
+    data class ResultItem(val outputPath: String, val inputSize: Long, val outputSize: Long)
 }

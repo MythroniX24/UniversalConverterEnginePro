@@ -15,12 +15,14 @@ class SplashActivity : AppCompatActivity() {
         setContentView(R.layout.activity_splash)
 
         Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
-        }, SPLASH_DELAY)
-    }
-
-    companion object {
-        private const val SPLASH_DELAY = 1500L
+            if (!isFinishing && !isDestroyed) {
+                try {
+                    startActivity(Intent(this, MainActivity::class.java))
+                } catch (e: Exception) {
+                    // fallback — just finish, app will open normally
+                }
+                finish()
+            }
+        }, 1200L)
     }
 }
