@@ -41,10 +41,11 @@ android {
             versionNameSuffix "-debug"
         }
         release {
-            minifyEnabled true
-            shrinkResources true
+            // Minification disabled for CI unsigned builds
+            // Enable when you have a proper keystore + stable ProGuard rules
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // For CI builds without keystore, use debug signing
             signingConfig signingConfigs.debug
         }
     }

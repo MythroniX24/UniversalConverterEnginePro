@@ -35,6 +35,7 @@ jobs:
           NDK_PATH="${ANDROID_SDK_ROOT}/ndk/25.2.9519653"
           echo "ANDROID_NDK_HOME=${NDK_PATH}" >> $GITHUB_ENV
           echo "ANDROID_NDK=${NDK_PATH}"      >> $GITHUB_ENV
+          echo "NDK ready: $(ls ${NDK_PATH} | head -3)"
 
       - name: Download Gradle Wrapper JAR
         run: |
@@ -42,6 +43,7 @@ jobs:
           curl -fsSL \
             "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
             -o gradle/wrapper/gradle-wrapper.jar
+          echo "JAR: $(wc -c < gradle/wrapper/gradle-wrapper.jar) bytes"
 
       - name: Cache Gradle packages
         uses: actions/cache@v4
@@ -56,59 +58,44 @@ jobs:
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
-      # ── Build Debug — save full log to file ──────────────────────────────────
+      # ── Build Debug APK ───────────────────────────────────────────────────────
       - name: Build Debug APK
-        id: build_debug
-        run: |
-          ./gradlew assembleDebug --no-daemon --stacktrace > /tmp/build_debug.log 2>&1
-          BUILD_EXIT=$?
-          # Always show last 100 lines in Actions log
-          echo "=== LAST 100 LINES ==="
-          tail -100 /tmp/build_debug.log
-          # Also show any line with error/exception
-          echo ""
-          echo "=== ERROR LINES ==="
-          grep -iE "^(e:|error:|exception|caused by|> task|BUILD FAILED)" /tmp/build_debug.log || true
-          exit $BUILD_EXIT
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── Upload full build log on failure ────────────────────────────────────
-      - name: Upload build log on failure
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-error-log
-          path: /tmp/build_debug.log
-          retention-days: 7
-
-      - name: Verify Debug APK exists
-        run: ls -lh app/build/outputs/apk/debug/*.apk
-
+      # ── Build Release APK ─────────────────────────────────────────────────────
       - name: Build Release APK
-        run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace > /tmp/build_release.log 2>&1
-          BUILD_EXIT=$?
-          tail -50 /tmp/build_release.log
-          grep -iE "^(e:|error:|exception|caused by|BUILD FAILED)" /tmp/build_release.log || true
-          exit $BUILD_EXIT
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
+      # ── Upload Debug APK — always runs even if release fails ──────────────────
       - name: Upload Debug APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: UniversalConverterEnginePro-Debug
           path: app/build/outputs/apk/debug/*.apk
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
 
+      # ── Upload Release APK ────────────────────────────────────────────────────
       - name: Upload Release APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: UniversalConverterEnginePro-Release
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 30
+
+      # ── Summary ───────────────────────────────────────────────────────────────
+      - name: Show build summary
+        if: always()
+        run: |
+          echo "=== APKs Generated ==="
+          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \; 2>/dev/null \
+            || echo "No APKs found"
