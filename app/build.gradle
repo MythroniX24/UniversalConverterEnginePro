@@ -68,6 +68,8 @@ android {
 
     kotlinOptions {
         jvmTarget = '17'
+        allWarningsAsErrors = false
+        freeCompilerArgs += ['-Xjvm-default=all', '-opt-in=kotlin.RequiresOptIn']
     }
 
     packagingOptions {
