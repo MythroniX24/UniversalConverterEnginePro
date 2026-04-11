@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -28,13 +28,11 @@ jobs:
 
       - name: Install NDK 25 and CMake
         run: |
-          yes | sdkmanager \
-            "ndk;25.2.9519653" \
-            "cmake;3.22.1" \
+          yes | sdkmanager "ndk;25.2.9519653" "cmake;3.22.1" \
             --sdk_root="${ANDROID_SDK_ROOT}" 2>&1 | grep -E "^(Downloading|Installing|done)" || true
-          NDK_PATH="${ANDROID_SDK_ROOT}/ndk/25.2.9519653"
-          echo "ANDROID_NDK_HOME=${NDK_PATH}" >> $GITHUB_ENV
-          echo "ANDROID_NDK=${NDK_PATH}"      >> $GITHUB_ENV
+          NDK="${ANDROID_SDK_ROOT}/ndk/25.2.9519653"
+          echo "ANDROID_NDK_HOME=${NDK}" >> $GITHUB_ENV
+          echo "ANDROID_NDK=${NDK}"      >> $GITHUB_ENV
 
       - name: Download Gradle Wrapper JAR
         run: |
@@ -43,53 +41,34 @@ jobs:
             "https://raw.githubusercontent.com/gradle/gradle/v8.4.0/gradle/wrapper/gradle-wrapper.jar" \
             -o gradle/wrapper/gradle-wrapper.jar
 
-      - name: Cache Gradle packages
+      - name: Cache Gradle
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+          restore-keys: ${{ runner.os }}-gradle-
 
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
-      # ── Debug Build ──────────────────────────────────────────────────────────
+      # ── DEBUG BUILD ──────────────────────────────────────────────────────────
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── Release Build — save log to file, show HEAD (real errors are at top) ─
+      # ── RELEASE BUILD — direct output, no pipe hiding errors ─────────────────
       - name: Build Release APK
-        id: build_release
         continue-on-error: true
-        run: |
-          ./gradlew assembleRelease --no-daemon --stacktrace > /tmp/release.log 2>&1
-          EXIT_CODE=$?
-          echo "====== FIRST 80 LINES (real errors here) ======"
-          head -80 /tmp/release.log
-          echo ""
-          echo "====== LAST 30 LINES ======"
-          tail -30 /tmp/release.log
-          exit $EXIT_CODE
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
         env:
           ANDROID_NDK_HOME: ${{ env.ANDROID_NDK_HOME }}
           ANDROID_NDK:      ${{ env.ANDROID_NDK_HOME }}
 
-      # ── Upload release log as artifact so we can read full error ────────────
-      - name: Upload release build log
-        if: steps.build_release.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-build-log
-          path: /tmp/release.log
-          retention-days: 7
-
-      # ── Upload Debug APK (always) ────────────────────────────────────────────
+      # ── UPLOAD (always runs) ─────────────────────────────────────────────────
       - name: Upload Debug APK
         if: always()
         uses: actions/upload-artifact@v4
@@ -99,7 +78,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      # ── Upload Release APK (if it built) ─────────────────────────────────────
       - name: Upload Release APK
         if: always()
         uses: actions/upload-artifact@v4
@@ -108,9 +86,3 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
           retention-days: 30
-
-      - name: Show APK summary
-        if: always()
-        run: |
-          echo "=== All APKs ==="
-          find app/build/outputs/apk -name "*.apk" -exec ls -lh {} \; 2>/dev/null || echo "None found"
