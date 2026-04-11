@@ -96,7 +96,8 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- WorkManager initialization -->
+        <!-- WorkManager: tools:node="remove" required because ConverterApplication
+             implements Configuration.Provider (on-demand initialization) -->
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
@@ -104,7 +105,8 @@
             tools:node="merge">
             <meta-data
                 android:name="androidx.work.impl.WorkManagerInitializer"
-                android:value="androidx.startup" />
+                android:value="androidx.startup"
+                tools:node="remove" />
         </provider>
 
     </application>
