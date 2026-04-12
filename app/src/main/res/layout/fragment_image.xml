@@ -1,262 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:fillViewport="true">
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="@color/background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="12dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
-
-        <!-- File Selection Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardElevation="2dp"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Select Images"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="12dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnPickFiles"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:text="Choose Files"
-                    app:icon="@android:drawable/ic_menu_gallery" />
-
-                <TextView
-                    android:id="@+id/tvFileCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="No files selected"
-                    android:textColor="?android:attr/textColorSecondary" />
-
-                <TextView
-                    android:id="@+id/tvTotalSize"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="?android:attr/textColorSecondary"
-                    android:textSize="12sp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnClear"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="Clear"
-                    android:visibility="gone"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+        <!-- Pick Card -->
+        <com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardCornerRadius="16dp" app:cardElevation="2dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnPickFiles"
+                    android:layout_width="match_parent" android:layout_height="52dp"
+                    android:text="Choose Images" app:icon="@android:drawable/ic_menu_gallery"/>
+                <TextView android:id="@+id/tvFileCount" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:layout_marginTop="8dp"
+                    android:text="No images selected" android:textColor="@color/text_secondary"/>
+                <TextView android:id="@+id/tvPrediction" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textColor="@color/teal_700" android:textSize="12sp"/>
+                <com.google.android.material.button.MaterialButton android:id="@+id/btnClear"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" android:text="Clear" android:visibility="gone"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"/>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Conversion Options Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            app:cardElevation="2dp"
-            app:cardCornerRadius="12dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Output Format"
-                    android:textStyle="bold"
-                    android:textSize="16sp"
-                    android:layout_marginBottom="8dp" />
-
-                <Spinner
-                    android:id="@+id/spinnerFormat"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-                <TextView
-                    android:id="@+id/tvPrediction"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/teal_700"
-                    android:textSize="12sp" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="4dp"
-                    android:text="Quality"
-                    android:textStyle="bold" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-
-                    <com.google.android.material.slider.Slider
-                        android:id="@+id/sliderQuality"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:valueFrom="1"
-                        android:valueTo="100"
-                        android:stepSize="1"
-                        android:value="85" />
-
-                    <TextView
-                        android:id="@+id/tvQualityValue"
-                        android:layout_width="48dp"
-                        android:layout_height="wrap_content"
-                        android:text="85%"
-                        android:gravity="end" />
-                </LinearLayout>
-
-                <!-- Toggles -->
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchRemoveExif"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Remove EXIF" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/switchKeepAspect"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Keep Aspect"
-                        android:checked="true" />
-                </LinearLayout>
+        <!-- Format Card -->
+        <com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardCornerRadius="16dp" app:cardElevation="2dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Output Format" android:textStyle="bold" android:textSize="15sp" android:layout_marginBottom="8dp"/>
+                <HorizontalScrollView android:layout_width="match_parent" android:layout_height="wrap_content">
+                    <com.google.android.material.chip.ChipGroup android:id="@+id/chipGroupFormat"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        app:singleSelection="true"/>
+                </HorizontalScrollView>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Progress Card -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="12dp"
-            android:orientation="vertical">
+        <!-- Quality Card -->
+        <com.google.android.material.card.MaterialCardView android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_marginBottom="10dp"
+            app:cardCornerRadius="16dp" app:cardElevation="2dp">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical">
+                    <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Quality" android:textStyle="bold"/>
+                    <TextView android:id="@+id/tvQuality" android:layout_width="48dp"
+                        android:layout_height="wrap_content" android:text="85%" android:gravity="end"/>
+                </LinearLayout>
+                <com.google.android.material.slider.Slider android:id="@+id/sliderQuality"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:valueFrom="1" android:valueTo="100" android:stepSize="1" android:value="85"/>
 
-            <ProgressBar
-                android:id="@+id/progressBar"
-                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                android:max="100" />
+                <!-- Options row -->
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="8dp">
+                    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchRemoveExif"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Remove EXIF"/>
+                    <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchKeepAspect"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:text="Keep Aspect" android:checked="true"/>
+                </LinearLayout>
 
-            <TextView
-                android:id="@+id/tvProgress"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary" />
+                <!-- Smart Compress -->
+                <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchSmartCompress"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp" android:text="Smart Compress (AI)"/>
+                <LinearLayout android:id="@+id/cardCompressMode" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:orientation="vertical"
+                    android:visibility="gone" android:layout_marginTop="4dp">
+                    <com.google.android.material.chip.ChipGroup android:id="@+id/chipGroupMode"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        app:singleSelection="true">
+                        <com.google.android.material.chip.Chip android:id="@+id/chipFast" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="Fast" android:checkable="true"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipBalanced" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="Balanced" android:checkable="true" android:checked="true"/>
+                        <com.google.android.material.chip.Chip android:id="@+id/chipUltra" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:text="Ultra" android:checkable="true"/>
+                    </com.google.android.material.chip.ChipGroup>
+                </LinearLayout>
+
+                <!-- Upscale -->
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Upscale" android:textStyle="bold" android:layout_marginTop="8dp"/>
+                <Spinner android:id="@+id/spinnerUpscale" android:layout_width="match_parent" android:layout_height="wrap_content"/>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Progress -->
+        <ProgressBar android:id="@+id/progressBar" style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:visibility="gone" android:max="100" android:layout_marginBottom="4dp"/>
+        <TextView android:id="@+id/tvProgress" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:textSize="12sp"
+            android:textColor="@color/text_secondary" android:layout_marginBottom="8dp"/>
+
+        <!-- Action Buttons -->
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnConvert"
+            android:layout_width="match_parent" android:layout_height="52dp"
+            android:text="Convert" android:enabled="false" android:layout_marginBottom="6dp"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnSmartCompress"
+            android:layout_width="match_parent" android:layout_height="48dp"
+            android:text="⚡ Smart Compress" android:enabled="false" android:layout_marginBottom="6dp"
+            app:backgroundTint="@color/teal_700"/>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginBottom="6dp">
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnRace"
+                android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1"
+                android:layout_marginEnd="4dp" android:text="🏁 Race"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnPrivacyScan"
+                android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1"
+                android:layout_marginHorizontal="4dp" android:text="🔍 Privacy"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            <com.google.android.material.button.MaterialButton android:id="@+id/btnNukeExif"
+                android:layout_width="0dp" android:layout_height="44dp" android:layout_weight="1"
+                android:layout_marginStart="4dp" android:text="🗑 EXIF"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
         </LinearLayout>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnCancel"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Cancel" android:visibility="gone" android:layout_marginBottom="8dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
 
-        <!-- Convert Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnConvert"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Convert"
-            android:enabled="false"
-            android:textSize="16sp"
-            android:layout_marginBottom="8dp" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnCancel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Cancel"
-            android:visibility="gone"
-            android:layout_marginBottom="12dp"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-        <!-- Results Card -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/cardResults"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:visibility="gone"
-            app:cardElevation="2dp"
-            app:cardCornerRadius="12dp"
+        <!-- Result Card -->
+        <com.google.android.material.card.MaterialCardView android:id="@+id/cardResult"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:visibility="gone" app:cardCornerRadius="16dp" app:cardElevation="2dp"
             app:cardBackgroundColor="@color/green_light">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:padding="16dp">
-
-                <TextView
-                    android:id="@+id/tvResultCount"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textStyle="bold"
-                    android:textSize="16sp" />
-
-                <TextView
-                    android:id="@+id/tvSizeSaved"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/teal_700"
-                    android:layout_marginTop="4dp" />
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="12dp">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnShareResults"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginEnd="4dp"
-                        android:text="Share"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnOpenFolder"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_marginStart="4dp"
-                        android:text="Open"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:id="@+id/tvResultSummary" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textStyle="bold" android:textSize="15sp"/>
+                <TextView android:id="@+id/tvSsim" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:textColor="@color/teal_700"
+                    android:textSize="12sp" android:layout_marginTop="2dp" android:visibility="gone"/>
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:layout_marginTop="10dp">
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnShare"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginEnd="4dp" android:text="Share"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                    <com.google.android.material.button.MaterialButton android:id="@+id/btnOpen"
+                        android:layout_width="0dp" android:layout_height="wrap_content"
+                        android:layout_weight="1" android:layout_marginStart="4dp" android:text="Open"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
                 </LinearLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
-
     </LinearLayout>
 </ScrollView>

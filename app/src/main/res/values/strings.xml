@@ -1,22 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Universal Converter Pro</string>
-    <string name="tab_image">Image</string>
-    <string name="tab_pdf">PDF</string>
-    <string name="tab_media">Media</string>
-    <string name="tab_3d">3D</string>
-    <string name="btn_pick_files">Choose Files</string>
-    <string name="btn_convert">Convert</string>
-    <string name="btn_cancel">Cancel</string>
-    <string name="btn_clear">Clear</string>
-    <string name="btn_share">Share</string>
-    <string name="no_files_selected">No files selected</string>
-    <string name="conversion_complete">Conversion complete!</string>
-    <string name="conversion_failed">Conversion failed</string>
-    <string name="upgrade_title">Upgrade to Pro</string>
-    <string name="upgrade_message">Daily limit reached. Upgrade for unlimited conversions.</string>
-    <string name="channel_conversion_name">Conversion Progress</string>
-    <string name="channel_complete_name">Conversion Complete</string>
-    <string name="fileprovider_authority">.fileprovider</string>
-    <string name="engine_version_prefix">NDK Engine v</string>
 </resources>

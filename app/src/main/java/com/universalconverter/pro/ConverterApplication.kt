@@ -8,44 +8,22 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 
 class ConverterApplication : Application(), Configuration.Provider {
-
     override fun onCreate() {
         super.onCreate()
-        createNotificationChannels()
+        createChannels()
     }
-
     override val workManagerConfiguration: Configuration
-        get() = Configuration.Builder()
-            .setMinimumLoggingLevel(android.util.Log.INFO)
-            .build()
+        get() = Configuration.Builder().setMinimumLoggingLevel(android.util.Log.INFO).build()
 
-    private fun createNotificationChannels() {
+    private fun createChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val conversionChannel = NotificationChannel(
-                CHANNEL_CONVERSION,
-                "Conversion Progress",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Shows progress of file conversions"
-                setShowBadge(false)
-            }
-
-            val completionChannel = NotificationChannel(
-                CHANNEL_COMPLETE,
-                "Conversion Complete",
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Notifies when conversion is complete"
-            }
-
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(conversionChannel)
-            manager.createNotificationChannel(completionChannel)
+            val mgr = getSystemService(NotificationManager::class.java)
+            mgr.createNotificationChannel(NotificationChannel(CH_CONV, "Conversion", NotificationManager.IMPORTANCE_LOW))
+            mgr.createNotificationChannel(NotificationChannel(CH_DONE, "Complete", NotificationManager.IMPORTANCE_DEFAULT))
         }
     }
-
     companion object {
-        const val CHANNEL_CONVERSION = "channel_conversion"
-        const val CHANNEL_COMPLETE   = "channel_complete"
+        const val CH_CONV = "ch_conversion"
+        const val CH_DONE = "ch_done"
     }
 }

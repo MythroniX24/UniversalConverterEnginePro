@@ -4,74 +4,43 @@ import android.content.Context
 import androidx.preference.PreferenceManager
 
 object PremiumManager {
+    private const val KEY_PREMIUM = "is_premium"
+    private const val KEY_COUNT   = "daily_count"
+    private const val KEY_DATE    = "last_date"
+    const val FREE_LIMIT = 15
 
-    private const val KEY_IS_PREMIUM = "pref_is_premium"
-    private const val KEY_CONVERSIONS_TODAY = "pref_conversions_today"
-    private const val KEY_LAST_RESET_DATE   = "pref_last_reset_date"
+    fun isPremium(ctx: Context) = prefs(ctx).getBoolean(KEY_PREMIUM, false)
+    fun setPremium(ctx: Context, v: Boolean) = prefs(ctx).edit().putBoolean(KEY_PREMIUM, v).apply()
+    fun canConvert(ctx: Context) = isPremium(ctx) || dailyCount(ctx) < FREE_LIMIT
+    fun remaining(ctx: Context) = if(isPremium(ctx)) Int.MAX_VALUE else maxOf(0, FREE_LIMIT - dailyCount(ctx))
 
-    private const val FREE_DAILY_LIMIT = 10
-
-    fun isPremium(context: Context): Boolean {
-        return PreferenceManager.getDefaultSharedPreferences(context)
-            .getBoolean(KEY_IS_PREMIUM, false)
+    fun record(ctx: Context) {
+        if (isPremium(ctx)) return
+        val today = today()
+        val p = prefs(ctx); val last = p.getString(KEY_DATE,"")
+        val cnt = if(last == today) p.getInt(KEY_COUNT,0) else 0
+        p.edit().putInt(KEY_COUNT, cnt+1).putString(KEY_DATE, today).apply()
     }
 
-    fun setPremium(context: Context, premium: Boolean) {
-        PreferenceManager.getDefaultSharedPreferences(context)
-            .edit().putBoolean(KEY_IS_PREMIUM, premium).apply()
+    private fun dailyCount(ctx: Context): Int {
+        val p = prefs(ctx); val today = today()
+        return if(p.getString(KEY_DATE,"") == today) p.getInt(KEY_COUNT,0) else 0
     }
-
-    fun canConvert(context: Context): Boolean {
-        if (isPremium(context)) return true
-        return getDailyConversionsUsed(context) < FREE_DAILY_LIMIT
-    }
-
-    fun getRemainingFreeConversions(context: Context): Int {
-        if (isPremium(context)) return Int.MAX_VALUE
-        return maxOf(0, FREE_DAILY_LIMIT - getDailyConversionsUsed(context))
-    }
-
-    fun recordConversion(context: Context) {
-        if (isPremium(context)) return
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        val today = getCurrentDateString()
-        val lastReset = prefs.getString(KEY_LAST_RESET_DATE, "")
-        val count = if (lastReset == today) prefs.getInt(KEY_CONVERSIONS_TODAY, 0)
-                    else 0
-        prefs.edit()
-            .putInt(KEY_CONVERSIONS_TODAY, count + 1)
-            .putString(KEY_LAST_RESET_DATE, today)
-            .apply()
-    }
-
-    private fun getDailyConversionsUsed(context: Context): Int {
-        val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        val today = getCurrentDateString()
-        val lastReset = prefs.getString(KEY_LAST_RESET_DATE, "")
-        return if (lastReset == today) prefs.getInt(KEY_CONVERSIONS_TODAY, 0) else 0
-    }
-
-    private fun getCurrentDateString(): String {
-        val cal = java.util.Calendar.getInstance()
-        return "${cal.get(java.util.Calendar.YEAR)}-" +
-               "${cal.get(java.util.Calendar.MONTH)}-" +
-               "${cal.get(java.util.Calendar.DAY_OF_MONTH)}"
-    }
-
-    data class PremiumFeature(
-        val name: String,
-        val description: String,
-        val freeAllowed: Boolean
-    )
+    private fun prefs(ctx: Context) = PreferenceManager.getDefaultSharedPreferences(ctx)
+    private fun today(): String { val c = java.util.Calendar.getInstance(); return "${c.get(java.util.Calendar.YEAR)}-${c.get(java.util.Calendar.DAY_OF_YEAR)}" }
 
     val features = listOf(
-        PremiumFeature("Unlimited Conversions", "No daily limits", false),
-        PremiumFeature("Batch Processing", "Convert multiple files at once", false),
-        PremiumFeature("Target Size Control", "Set exact output file size", false),
-        PremiumFeature("EXIF Removal", "Strip all metadata", true),
-        PremiumFeature("High Quality Export", "Maximum quality output", true),
-        PremiumFeature("PDF Merge/Split", "Combine and split PDF files", false),
-        PremiumFeature("3D Model Viewer", "View OBJ and FBX files", true),
-        PremiumFeature("Ad-Free", "No advertisements", false)
+        Triple("Unlimited Conversions","No daily limit",false),
+        Triple("Smart Compress AI","AI-powered quality optimization",false),
+        Triple("Compression Racing","Best algorithm auto-selected",false),
+        Triple("Target Size Enforcer","Hit exact file sizes",false),
+        Triple("PDF All Tools","Password, watermark, split",false),
+        Triple("Background Remover","Transparent PNG output",false),
+        Triple("Image Upscaler","2x/4x quality upscaling",false),
+        Triple("Cloud Integration","Google Drive & Dropbox",false),
+        Triple("Privacy Scanner","Detect sensitive metadata",true),
+        Triple("Conversion History","Track all conversions",true),
+        Triple("SSIM Quality Score","Measure output quality",true),
+        Triple("Ad-Free","No advertisements",false)
     )
 }

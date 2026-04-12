@@ -9,18 +9,12 @@ import androidx.appcompat.app.AppCompatActivity
 
 @SuppressLint("CustomSplashScreen")
 class SplashActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash)
-
         Handler(Looper.getMainLooper()).postDelayed({
             if (!isFinishing && !isDestroyed) {
-                try {
-                    startActivity(Intent(this, MainActivity::class.java))
-                } catch (e: Exception) {
-                    // fallback — just finish, app will open normally
-                }
+                startActivity(Intent(this, MainActivity::class.java))
                 finish()
             }
         }, 1200L)

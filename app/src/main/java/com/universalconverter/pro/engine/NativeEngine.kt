@@ -3,150 +3,72 @@ package com.universalconverter.pro.engine
 import android.graphics.Bitmap
 import android.util.Log
 
-/**
- * JNI bridge to the native C++ converter engine.
- * Safe wrappers — never crashes even if .so fails to load.
- */
 object NativeEngine {
-
     private const val TAG = "NativeEngine"
-    var isLoaded: Boolean = false
-        private set
+    var isLoaded = false; private set
 
     init {
-        try {
-            System.loadLibrary("universalconverter")
-            isLoaded = true
-            Log.i(TAG, "Native library loaded successfully")
-        } catch (e: UnsatisfiedLinkError) {
-            isLoaded = false
-            Log.e(TAG, "Failed to load native library: ${e.message}")
-        } catch (e: Exception) {
-            isLoaded = false
-            Log.e(TAG, "Unexpected error loading native library: ${e.message}")
-        }
+        try { System.loadLibrary("universalconverter"); isLoaded = true; Log.i(TAG, "NDK loaded ✓") }
+        catch (e: Throwable) { Log.e(TAG, "NDK load failed: ${e.message}") }
     }
 
-    // ─── Safe wrappers — fallback if .so not loaded ───────────────────────────
+    fun getVersion()                                = safe("2.0.0") { getVersion() }
+    fun getCategory(path: String)                   = safeInt(6)   { getCategoryNative(path) }
+    fun isValidConversion(from: String, to: String) = safeBool     { isValidConversionNative(from, to) }
+    fun getFileSize(path: String)                   = safeLong(-1) { getFileSizeNative(path) }
+    fun predictSize(sz: Long, fmt: String, q: Int)  = safeLong(-1) { predictSizeNative(sz, fmt, q) }
+    fun estimateQuality(inSz: Long, tgt: Long)      = safeInt(85)  { estimateQualityNative(inSz, tgt) }
+    fun computeBrightness(bmp: Bitmap)              = safeFloat(.5f){ computeBrightnessNative(bmp) }
+    fun computeComplexity(bmp: Bitmap)              = safeFloat(.5f){ computeComplexityNative(bmp) }
+    fun computeSSIM(b1: Bitmap, b2: Bitmap)         = safeFloat(-1f){ computeSSIMNative(b1, b2) }
+    fun perceptualHash(bmp: Bitmap)                 = safeLong(0)  { computePerceptualHashNative(bmp) }
+    fun hammingDistance(h1: Long, h2: Long)         = safeInt(64)  { hammingDistanceNative(h1, h2) }
+    fun isDuplicate(h1: Long, h2: Long, thr: Int)   = safeBool     { isDuplicateNative(h1, h2, thr) }
+    fun classifyContent(bmp: Bitmap)                = safeInt(0)   { classifyImageContentNative(bmp) }
+    fun recommendedQuality(ct: Int, mode: Int)      = safeInt(80)  { getRecommendedQualityNative(ct, mode) }
+    fun recommendFormat(ct: Int, alpha: Boolean)    = safeInt(2)   { recommendFormatNative(ct, alpha) }
+    fun applyGrayscale(bmp: Bitmap)                 { if (isLoaded) try { applyGrayscaleNative(bmp) } catch (_: Exception) {} }
+    fun resizeBitmap(src: Bitmap, dst: Bitmap)      = safeBool     { resizeBitmapNative(src, dst) }
+    fun upscaleBitmap(src: Bitmap, dst: Bitmap, sharpness: Float) = safeBool { upscaleBitmapNative(src, dst, sharpness) }
+    fun getThreadCount()                            = safeInt(2)   { getThreadCountNative() }
+    fun cancel()  { if (isLoaded) try { cancelNative() }      catch (_: Exception) {} }
+    fun resetCancel() { if (isLoaded) try { resetCancelNative() } catch (_: Exception) {} }
 
-    fun getEngineVersion(): String =
-        if (isLoaded) try { getEngineVersionNative() } catch (e: Exception) { "1.0.0-fallback" }
-        else "1.0.0-fallback"
+    private fun safe(default: String, block: NativeEngine.() -> String) =
+        if (isLoaded) try { block() } catch (_: Exception) { default } else default
+    private fun safeInt(d: Int, block: NativeEngine.() -> Int) =
+        if (isLoaded) try { block() } catch (_: Exception) { d } else d
+    private fun safeLong(d: Long, block: NativeEngine.() -> Long) =
+        if (isLoaded) try { block() } catch (_: Exception) { d } else d
+    private fun safeFloat(d: Float, block: NativeEngine.() -> Float) =
+        if (isLoaded) try { block() } catch (_: Exception) { d } else d
+    private fun safeBool(block: NativeEngine.() -> Boolean) =
+        if (isLoaded) try { block() } catch (_: Exception) { false } else false
 
-    fun detectMimeType(filePath: String): String =
-        if (isLoaded) try { detectMimeTypeNative(filePath) } catch (e: Exception) { "application/octet-stream" }
-        else "application/octet-stream"
+    private external fun getVersion(): String
+    private external fun getCategoryNative(path: String): Int
+    private external fun isValidConversionNative(from: String, to: String): Boolean
+    private external fun getFileSizeNative(path: String): Long
+    private external fun predictSizeNative(sz: Long, fmt: String, q: Int): Long
+    private external fun estimateQualityNative(inSz: Long, tgt: Long): Int
+    private external fun computeBrightnessNative(bmp: Bitmap): Float
+    private external fun computeComplexityNative(bmp: Bitmap): Float
+    private external fun computeSSIMNative(b1: Bitmap, b2: Bitmap): Float
+    private external fun computePerceptualHashNative(bmp: Bitmap): Long
+    private external fun hammingDistanceNative(h1: Long, h2: Long): Int
+    private external fun isDuplicateNative(h1: Long, h2: Long, thr: Int): Boolean
+    private external fun classifyImageContentNative(bmp: Bitmap): Int
+    private external fun getRecommendedQualityNative(ct: Int, mode: Int): Int
+    private external fun recommendFormatNative(ct: Int, alpha: Boolean): Int
+    private external fun applyGrayscaleNative(bmp: Bitmap)
+    private external fun resizeBitmapNative(src: Bitmap, dst: Bitmap): Boolean
+    private external fun upscaleBitmapNative(src: Bitmap, dst: Bitmap, sharpness: Float): Boolean
+    private external fun getThreadCountNative(): Int
+    private external fun cancelNative()
+    private external fun resetCancelNative()
 
-    fun detectCategory(filePath: String): Int =
-        if (isLoaded) try { detectCategoryNative(filePath) } catch (e: Exception) { CATEGORY_UNKNOWN }
-        else CATEGORY_UNKNOWN
-
-    fun detectByMagicBytes(filePath: String): String =
-        if (isLoaded) try { detectByMagicBytesNative(filePath) } catch (e: Exception) { "unknown" }
-        else "unknown"
-
-    fun isValidConversion(fromExt: String, toExt: String): Boolean =
-        if (isLoaded) try { isValidConversionNative(fromExt, toExt) } catch (e: Exception) { false }
-        else false
-
-    fun getValidOutputFormats(inputPath: String): Array<String> =
-        if (isLoaded) try { getValidOutputFormatsNative(inputPath) } catch (e: Exception) { emptyArray() }
-        else emptyArray()
-
-    fun suggestBestFormat(inputPath: String): String =
-        if (isLoaded) try { suggestBestFormatNative(inputPath) } catch (e: Exception) { "jpg" }
-        else "jpg"
-
-    fun predictOutputSize(inputPath: String, targetFormat: String, quality: Int): Long =
-        if (isLoaded) try { predictOutputSizeNative(inputPath, targetFormat, quality) } catch (e: Exception) { -1L }
-        else -1L
-
-    fun getFileSize(filePath: String): Long =
-        if (isLoaded) try { getFileSizeNative(filePath) } catch (e: Exception) { -1L }
-        else -1L
-
-    fun fileExists(filePath: String): Boolean =
-        if (isLoaded) try { fileExistsNative(filePath) } catch (e: Exception) { false }
-        else false
-
-    fun resizeBitmapNative(srcBitmap: Bitmap, dstBitmap: Bitmap): Boolean =
-        if (isLoaded) try { resizeBitmapNativeImpl(srcBitmap, dstBitmap) } catch (e: Exception) { false }
-        else false
-
-    fun computeBrightness(bitmap: Bitmap): Float =
-        if (isLoaded) try { computeBrightnessNative(bitmap) } catch (e: Exception) { 0.5f }
-        else 0.5f
-
-    fun computeImageComplexity(bitmap: Bitmap): Float =
-        if (isLoaded) try { computeImageComplexityNative(bitmap) } catch (e: Exception) { 0.5f }
-        else 0.5f
-
-    fun applyGrayscale(bitmap: Bitmap) {
-        if (isLoaded) try { applyGrayscaleNative(bitmap) } catch (e: Exception) { /* ignore */ }
-    }
-
-    fun applyLightBlur(bitmap: Bitmap, radius: Int) {
-        if (isLoaded) try { applyLightBlurNative(bitmap, radius) } catch (e: Exception) { /* ignore */ }
-    }
-
-    fun adjustBrightnessContrast(bitmap: Bitmap, brightness: Float, contrast: Float) {
-        if (isLoaded) try { adjustBrightnessContrastNative(bitmap, brightness, contrast) } catch (e: Exception) { /* ignore */ }
-    }
-
-    fun estimateOptimalQuality(inputSizeBytes: Long, targetSizeBytes: Long, format: String): Int =
-        if (isLoaded) try { estimateOptimalQualityNative(inputSizeBytes, targetSizeBytes, format) } catch (e: Exception) { 85 }
-        else 85
-
-    fun computeCompressionRatio(originalSize: Long, compressedSize: Long): Float =
-        if (isLoaded) try { computeCompressionRatioNative(originalSize, compressedSize) } catch (e: Exception) { 0f }
-        else 0f
-
-    fun compressDataNative(inputData: ByteArray): ByteArray =
-        if (isLoaded) try { compressDataNativeImpl(inputData) } catch (e: Exception) { inputData }
-        else inputData
-
-    fun decompressDataNative(inputData: ByteArray): ByteArray =
-        if (isLoaded) try { decompressDataNativeImpl(inputData) } catch (e: Exception) { inputData }
-        else inputData
-
-    fun getAvailableThreads(): Int =
-        if (isLoaded) try { getAvailableThreadsNative() } catch (e: Exception) { 2 }
-        else 2
-
-    fun cancelOperation() {
-        if (isLoaded) try { cancelOperationNative() } catch (e: Exception) { /* ignore */ }
-    }
-
-    // ─── Category Constants ───────────────────────────────────────────────────
-    const val CATEGORY_IMAGE    = 0
-    const val CATEGORY_DOCUMENT = 1
-    const val CATEGORY_VIDEO    = 2
-    const val CATEGORY_AUDIO    = 3
-    const val CATEGORY_ARCHIVE  = 4
-    const val CATEGORY_3D       = 5
-    const val CATEGORY_UNKNOWN  = 6
-
-    // ─── Native declarations (private) ────────────────────────────────────────
-    private external fun getEngineVersionNative(): String
-    private external fun detectMimeTypeNative(filePath: String): String
-    private external fun detectCategoryNative(filePath: String): Int
-    private external fun detectByMagicBytesNative(filePath: String): String
-    private external fun isValidConversionNative(fromExt: String, toExt: String): Boolean
-    private external fun getValidOutputFormatsNative(inputPath: String): Array<String>
-    private external fun suggestBestFormatNative(inputPath: String): String
-    private external fun predictOutputSizeNative(inputPath: String, targetFormat: String, quality: Int): Long
-    private external fun getFileSizeNative(filePath: String): Long
-    private external fun fileExistsNative(filePath: String): Boolean
-    private external fun resizeBitmapNativeImpl(srcBitmap: Bitmap, dstBitmap: Bitmap): Boolean
-    private external fun computeBrightnessNative(bitmap: Bitmap): Float
-    private external fun computeImageComplexityNative(bitmap: Bitmap): Float
-    private external fun applyGrayscaleNative(bitmap: Bitmap)
-    private external fun applyLightBlurNative(bitmap: Bitmap, radius: Int)
-    private external fun adjustBrightnessContrastNative(bitmap: Bitmap, brightness: Float, contrast: Float)
-    private external fun estimateOptimalQualityNative(inputSizeBytes: Long, targetSizeBytes: Long, format: String): Int
-    private external fun computeCompressionRatioNative(originalSize: Long, compressedSize: Long): Float
-    private external fun compressDataNativeImpl(inputData: ByteArray): ByteArray
-    private external fun decompressDataNativeImpl(inputData: ByteArray): ByteArray
-    private external fun getAvailableThreadsNative(): Int
-    private external fun cancelOperationNative()
+    const val CAT_IMAGE = 0; const val CAT_DOC = 1; const val CAT_VIDEO = 2
+    const val CAT_AUDIO = 3; const val CAT_3D = 5; const val CAT_UNKNOWN = 6
+    const val FMT_JPG = 0; const val FMT_PNG = 1; const val FMT_WEBP = 2; const val FMT_BMP = 3
+    const val MODE_FAST = 0; const val MODE_BALANCED = 1; const val MODE_ULTRA = 2
 }

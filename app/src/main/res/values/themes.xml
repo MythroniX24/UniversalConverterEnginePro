@@ -1,44 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-
-    <!-- Base application theme -->
     <style name="Theme.UniversalConverterPro" parent="Theme.MaterialComponents.DayNight.DarkActionBar">
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorPrimaryVariant">@color/primary_dark</item>
         <item name="colorSecondary">@color/accent</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
         <item name="colorOnPrimary">@color/on_primary</item>
         <item name="android:colorBackground">@color/background</item>
         <item name="colorSurface">@color/surface</item>
-        <item name="colorOnSurface">@color/on_surface</item>
         <item name="colorError">@color/error</item>
-        <item name="android:statusBarColor" tools:targetApi="21">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor" tools:targetApi="21">@color/primary_dark</item>
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
-
-    <!-- Splash Screen theme -->
     <style name="Theme.UniversalConverterPro.Splash" parent="Theme.UniversalConverterPro">
         <item name="android:windowBackground">@color/primary</item>
         <item name="android:statusBarColor">@color/primary</item>
-        <item name="android:navigationBarColor">@color/primary</item>
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
     </style>
-
-    <!-- No action bar variant -->
-    <style name="Theme.UniversalConverterPro.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
-    </style>
-
-    <!-- AppBarOverlay -->
-    <style name="Theme.UniversalConverterPro.AppBarOverlay"
-        parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
-    <!-- PopupOverlay -->
-    <style name="Theme.UniversalConverterPro.PopupOverlay"
-        parent="ThemeOverlay.AppCompat.Light" />
-
 </resources>
