@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="12dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:layout_marginBottom="12dp">
+            <com.google.android.material.card.MaterialCardView android:layout_width="0dp"
+                android:layout_height="100dp" android:layout_weight="1" android:layout_marginEnd="6dp"
+                app:cardCornerRadius="16dp" app:cardElevation="2dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:orientation="vertical" android:gravity="center" android:padding="12dp">
+                    <TextView android:id="@+id/tvTotalConversions" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="0" android:textSize="32sp"
+                        android:textStyle="bold" android:textColor="@color/primary"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Conversions" android:textColor="#FF757575" android:textSize="11sp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+            <com.google.android.material.card.MaterialCardView android:layout_width="0dp"
+                android:layout_height="100dp" android:layout_weight="1" android:layout_marginStart="6dp"
+                app:cardCornerRadius="16dp" app:cardElevation="2dp">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+                    android:orientation="vertical" android:gravity="center" android:padding="12dp">
+                    <TextView android:id="@+id/tvTotalSaved" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:text="0 B" android:textSize="24sp"
+                        android:textStyle="bold" android:textColor="@color/teal_700"/>
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Space Saved" android:textColor="#FF757575" android:textSize="11sp"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </LinearLayout>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnClear"
+            android:layout_width="match_parent" android:layout_height="44dp"
+            android:text="Clear History" android:layout_marginBottom="12dp"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="Recent Conversions" android:textStyle="bold" android:textSize="15sp"
+            android:layout_marginBottom="8dp"/>
+        <TextView android:id="@+id/tvHistoryEmpty" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="No conversions yet"
+            android:textColor="#FF757575" android:visibility="gone"/>
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvHistory"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:nestedScrollingEnabled="false"/>
+    </LinearLayout>
+</ScrollView>

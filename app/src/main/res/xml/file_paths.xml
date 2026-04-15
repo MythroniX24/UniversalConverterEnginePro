@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path name="images"    path="Pictures/UCEngine/"/>
+    <external-files-path name="documents" path="Documents/UCEngine/"/>
+    <external-files-path name="audio"     path="Music/UCEngine/"/>
+    <external-files-path name="video"     path="Movies/UCEngine/"/>
+    <cache-path         name="cache"      path="."/>
+    <files-path         name="internal"   path="."/>
+</paths>
