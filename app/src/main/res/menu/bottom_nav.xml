@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:id="@+id/imageFragment"    android:icon="@drawable/ic_image"     android:title="Image"/>
-    <item android:id="@+id/documentFragment" android:icon="@drawable/ic_pdf"       android:title="Document"/>
-    <item android:id="@+id/mediaFragment"    android:icon="@drawable/ic_media"     android:title="Media"/>
-    <item android:id="@+id/toolsFragment"    android:icon="@drawable/ic_tools"     android:title="Tools"/>
-    <item android:id="@+id/dashboardFragment" android:icon="@drawable/ic_dashboard" android:title="Stats"/>
-</menu>

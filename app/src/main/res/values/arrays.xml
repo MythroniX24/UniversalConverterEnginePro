@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string-array name="dpi_options">
-        <item>72 DPI (Small)</item>
-        <item>96 DPI (Normal)</item>
-        <item>150 DPI (Good)</item>
-        <item>200 DPI (High)</item>
-    </string-array>
-</resources>

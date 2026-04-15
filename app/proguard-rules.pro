@@ -1,6 +1,0 @@
--keep class com.universalconverter.pro.** { *; }
--keepclassmembers class * { native <methods>; }
--dontwarn org.slf4j.**
--dontwarn org.apache.**
--keep class androidx.room.** { *; }
--keepattributes *Annotation*
