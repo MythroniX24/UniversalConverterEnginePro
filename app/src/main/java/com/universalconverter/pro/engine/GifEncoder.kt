@@ -76,10 +76,14 @@ class GifEncoder {
     private fun quantize(pixels: IntArray, map: IntArray): ByteArray {
         val result = ByteArray(pixels.size)
         for (i in pixels.indices) {
-            val r=(pixels[i]shr16)and0xFF; val g=(pixels[i]shr8)and0xFF; val b=pixels[i]and0xFF
+            val r = (pixels[i] shr 16) and 0xFF
+            val g = (pixels[i] shr 8) and 0xFF
+            val b = pixels[i] and 0xFF
             var best=0; var bestD=Int.MAX_VALUE
             for (j in map.indices) {
-                val mr=(map[j]shr16)and0xFF; val mg=(map[j]shr8)and0xFF; val mb=map[j]and0xFF
+                val mr = (map[j] shr 16) and 0xFF
+                val mg = (map[j] shr 8) and 0xFF
+                val mb = map[j] and 0xFF
                 val d=(r-mr)*(r-mr)+(g-mg)*(g-mg)+(b-mb)*(b-mb)
                 if(d<bestD){bestD=d;best=j}
             }
