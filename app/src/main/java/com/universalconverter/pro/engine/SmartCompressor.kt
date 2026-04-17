@@ -30,7 +30,7 @@ object SmartCompressor {
             onProgress(30, "Content: $contentName — optimizing…")
 
             val quality = if (targetSizeBytes > 0) {
-                val inSize = FileDetector.getOrEstimateSize(context, uri)
+                val inSize = estimateSize(context, uri)
                 NativeEngine.estimateQuality(inSize, targetSizeBytes)
             } else {
                 NativeEngine.recommendedQuality(contentType, mode.ordinal)
@@ -83,7 +83,7 @@ object SmartCompressor {
                         val sz = result.outputSizeBytes
                         if (targetSize > 0 && sz > targetSize) { File(result.outputPath).delete(); return@forEachIndexed }
                         val ssim = result.ssimScore
-                        val score = sz.toDouble() / (if(ssim > 0) ssim else 0.8)
+                        val score = sz.toDouble() / (if(ssim > 0) ssim.toDouble() else 0.8)
                         if (score < bestScore) {
                             best?.let { File(it.outputPath).delete() }
                             bestScore = score
@@ -99,7 +99,7 @@ object SmartCompressor {
     }
 }
 
-fun FileDetector.Companion.getOrEstimateSize(context: android.content.Context, uri: android.net.Uri): Long {
-    val info = analyze(context, uri)
+private fun estimateSize(context: android.content.Context, uri: android.net.Uri): Long {
+    val info = FileDetector.analyze(context, uri)
     return if (info.sizeBytes > 0) info.sizeBytes else 500_000L
 }

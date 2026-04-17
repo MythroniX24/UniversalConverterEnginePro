@@ -14,6 +14,7 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.universalconverter.pro.databinding.ActivityMainBinding
+import com.universalconverter.pro.premium.PremiumActivity
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -61,7 +62,7 @@ class MainActivity : AppCompatActivity() {
     }
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_premium) {
-            startActivity(android.content.Intent(this, premium.PremiumActivity::class.java))
+            startActivity(android.content.Intent(this, PremiumActivity::class.java))
             return true
         }
         return super.onOptionsItemSelected(item)

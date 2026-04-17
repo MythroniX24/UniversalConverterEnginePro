@@ -12,7 +12,7 @@ object NativeEngine {
         catch (e: Throwable) { Log.e(TAG, "NDK load failed: ${e.message}") }
     }
 
-    fun getVersion()                                = safe("2.0.0") { getVersion() }
+    fun getVersion(): String                        = if (isLoaded) try { getVersionNdk() } catch (_: Exception) { "2.0.0" } else "2.0.0"
     fun getCategory(path: String)                   = safeInt(6)   { getCategoryNative(path) }
     fun isValidConversion(from: String, to: String) = safeBool     { isValidConversionNative(from, to) }
     fun getFileSize(path: String)                   = safeLong(-1) { getFileSizeNative(path) }
@@ -45,7 +45,7 @@ object NativeEngine {
     private fun safeBool(block: NativeEngine.() -> Boolean) =
         if (isLoaded) try { block() } catch (_: Exception) { false } else false
 
-    private external fun getVersion(): String
+    private external fun getVersionNdk(): String
     private external fun getCategoryNative(path: String): Int
     private external fun isValidConversionNative(from: String, to: String): Boolean
     private external fun getFileSizeNative(path: String): Long

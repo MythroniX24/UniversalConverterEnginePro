@@ -34,7 +34,7 @@ const std::vector<std::string> TD   = {"obj","fbx","stl"};
 
 extern "C" {
 
-JNIEXPORT jstring JNICALL Java_com_universalconverter_pro_engine_NativeEngine_getVersion(JNIEnv* e, jobject)
+JNIEXPORT jstring JNICALL Java_com_universalconverter_pro_engine_NativeEngine_getVersionNdk(JNIEnv* e, jobject)
 { return e->NewStringUTF("2.0.0-NDK"); }
 
 JNIEXPORT jint JNICALL Java_com_universalconverter_pro_engine_NativeEngine_getCategoryNative(JNIEnv* e, jobject, jstring p) {

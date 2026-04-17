@@ -3,6 +3,7 @@
 #include <android/log.h>
 #include <android/bitmap.h>
 #include <cmath>
+#include <vector>
 #include <algorithm>
 #define LOG_TAG "SmartCompress"
 

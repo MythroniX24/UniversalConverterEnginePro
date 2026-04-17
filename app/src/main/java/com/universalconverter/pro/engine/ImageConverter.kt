@@ -52,7 +52,7 @@ object ImageConverter {
         repeat(6) {
             val mid = (lo + hi) / 2
             val tmp = File(context.cacheDir, "test_${System.currentTimeMillis()}.${job.outputFormat}")
-            encode(context, bmp, job.copy(outputPath = tmp.absolutePath), mid) {}
+            encode(context, bmp, job.copy(outputPath = tmp.absolutePath), mid) { _, _ -> }
             val sz = tmp.length(); tmp.delete()
             if (sz <= job.targetSizeBytes) { best = mid; lo = mid + 1 } else hi = mid - 1
         }
